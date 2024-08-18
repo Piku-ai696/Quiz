@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naruto Quiz Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page {
+            display: none;
+            padding: 20px;
+        }
+
+        #loginPage, #profilePage, #homePage, #gamePage {
+            display: none;
+        }
+
+        .top-right, .bottom-left, .bottom-right, .center {
+            position: absolute;
+        }
+
+        .top-right {
+            top: 10px;
+            right: 10px;
+        }
+
+        .bottom-left {
+            bottom: 10px;
+            left: 10px;
+        }
+
+        .bottom-right {
+            bottom: 10px;
+            right: 10px;
+        }
+
+        .center {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 2px solid black;
+            z-index: 1000;
+        }
+
+        #questionImage {
+            max-width: 300px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login/Register Page -->
+    <div id="loginPage" class="page">
+        <h2>Login/Register</h2>
+        <input type="email" id="email" placeholder="Gmail" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button onclick="register()">Register</button>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Profile Page -->
+    <div id="profilePage" class="page" style="display:none;">
+        <h2>Profile</h2>
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="text" id="instagram" placeholder="Instagram ID" required>
+        <input type="file" id="profilePic" accept="image/*">
+        <button onclick="saveProfile()">Save Profile</button>
+    </div>
+
+    <!-- Home Page -->
+    <div id="homePage" class="page" style="display:none;">
+        <div class="top-right"><button onclick="openProfile()">Profile</button></div>
+        <div class="bottom-left"><button onclick="viewHighestScore()">Highest Score</button></div>
+        <div class="bottom-right"><button onclick="viewRank()">Rank</button></div>
+        <div class="center"><button onclick="startGame()">Start Game</button></div>
+    </div>
+
+    <!-- Game Page -->
+    <div id="gamePage" class="page" style="display:none;">
+        <img id="questionImage" src="" alt="Question Image">
+        <div id="options">
+            <button onclick="checkAnswer(1)">Option 1</button>
+            <button onclick="checkAnswer(2)">Option 2</button>
+            <button onclick="checkAnswer(3)">Option 3</button>
+            <button onclick="checkAnswer(4)">Option 4</button>
+        </div>
+    </div>
+
+    <!-- Popup -->
+    <div id="popup" class="popup" style="display:none;">
+        <h2 id="popupMessage"></h2>
+        <button id="popupButton1" onclick="popupAction1()">Action 1</button>
+        <button id="popupButton2" onclick="popupAction2()">Action 2</button>
+    </div>
+
+    <script>
+        let users = [];
+        let currentUser = null;
+        let score = 0;
+        let currentQuestion = null;
+
+        const images = [
+            {
+                src: "https://i.postimg.cc/YvC4sk7K/naruto.jpg",
+                options: ["Naruto", "Boruto", "Sasuke", "Kakashi"],
+                answer: 1
+            },
+            {
+                src: "https://i.postimg.cc/67YXq71T/sasuke.jpg",
+                options: ["Naruto", "Boruto", "Sasuke", "Kakashi"],
+                answer: 3
+            },
+            {
+                src: "https://i.postimg.cc/QFYmMhJh/kakashi.jpg",
+                options: ["Naruto", "Boruto", "Sasuke", "Kakashi"],
+                answer: 4
+            },
+            {
+                src: "https://i.postimg.cc/rd8D7rrp/jiraya.jpg",
+                options: ["Naruto", "Jiraya", "Sasuke", "Kakashi"],
+                answer: 2
+            },
+            {
+                src: "https://i.postimg.cc/kRCzyqHL/itachi.jpg",
+                options: ["Naruto", "Boruto", "Itachi", "Kakashi"],
+                answer: 3
+            },
+            {
+                src: "https://i.postimg.cc/8JgNq83m/obito.jpg",
+                options: ["Naruto", "Boruto", "Sasuke", "Obito"],
+                answer: 4
+            },
+            {
+                src: "https://i.postimg.cc/DSbVFj1j/madara.jpg",
+                options: ["Madara", "Boruto", "Sasuke", "Kakashi"],
+                answer: 1
+            },
+            {
+                src: "https://i.postimg.cc/yJvyGBWw/hinata.jpg",
+                options: ["Naruto", "Hinata", "Sasuke", "Kakashi"],
+                answer: 2
+            },
+            {
+                src: "https://i.postimg.cc/sv78NQzq/ino.jpg",
+                options: ["Naruto", "Boruto", "Ino", "Kakashi"],
+                answer: 3
+            },
+            {
+                src: "https://i.postimg.cc/Q9FYkVS6/gara.jpg",
+                options: ["Gara", "Boruto", "Sasuke", "Kakashi"],
+                answer: 1
+            }
+        ];
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+            document.getElementById(pageId).style.display = 'block';
+        }
+
+        function register() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            if (users.find(user => user.email === email)) {
+                alert("Gmail already registered. Please login.");
+            } else {
+                users.push({ email, password, profile: null, score: 0 });
+                alert("Registration successful. Please login.");
+            }
+        }
+
+        function login() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            const user = users.find(user => user.email === email && user.password === password);
+            if (user) {
+                currentUser = user;
+                showPage('profilePage');
+            } else {
+                alert("Invalid login credentials.");
+            }
+        }
+
+        function saveProfile() {
+            const name = document.getElementById("name").value;
+            const instagram = document.getElementById("instagram").value;
+            const profilePic = document.getElementById("profilePic").files[0];
+
+            if (name && instagram && profilePic) {
+                currentUser.profile = { name, instagram, profilePic };
+                showPage('homePage');
+            } else {
+                alert("Please fill in all fields.");
+            }
+        }
+
+        function openProfile() {
+            showPage('profilePage');
+        }
+
+        function startGame() {
+            score = 0;
+            loadQuestion();
+            showPage('gamePage');
+        }
+
+        function loadQuestion() {
+            const randomIndex = Math.floor(Math.random() * images.length);
+            currentQuestion = images[randomIndex];
+            document.getElementById("questionImage").src = currentQuestion.src;
+            const options = document.getElementById("options").children;
+            for (let i = 0; i < options.length; i++) {
+                options[i].innerText = currentQuestion.options[i];
+            }
+        }
+
+        function checkAnswer(option) {
+            if (option === currentQuestion.answer) {
+                score++;
+                showPopup("Correct!", "Next", nextQuestion, "Exit", exitGame);
+            } else {
+                showPopup("Wrong! Your score: " + score, "Retry", retryGame, "Exit", exitGame);
+            }
+        }
+
+        function showPopup(message, button1Text, action1, button2Text, action2) {
+            document.getElementById('popupMessage').innerText = message;
+            document.getElementById('popupButton1').innerText = button1Text;
+            document.getElementById('popupButton2').innerText = button2Text;
+            popupAction1 = action1;
+            popupAction2 = action2;
+            document.getElementById('popup').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            document.getElementById('popup').style.display = 'none';
+            loadQuestion();
+        }
+
+        function retryGame() {
+            document.getElementById('popup').style.display = 'none';
+            startGame();
+        }
+
+        function exitGame() {
+            document.getElementById('popup').style.display = 'none';
+            currentUser.score = Math.max(currentUser.score, score);
+            showPage('homePage');
+        }
+
+        function viewHighestScore() {
+            alert(`Your highest score is: ${currentUser.score}`);
+        }
+
+        function viewRank() {
+            const topUsers = users.sort((a, b) => b.score - a.score).slice(0, 20);
+            let rankMessage = "Top 20 Players:\n";
+            topUsers.forEach((user, index) => {
+                rankMessage += `${index + 1}. ${user.profile.name}: ${user.score}\n`;
+            });
+            alert(rankMessage);
+        }
+
+        // Initialize the game by showing the login page
+        showPage('loginPage');
+    </script>
+</body>
+</html>
